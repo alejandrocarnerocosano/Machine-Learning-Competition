@@ -1,0 +1,329 @@
+---
+title: "Descriptive_train"
+author: "Margherita Berutti"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(psych)
+library(ggplot2)
+library(inspectdf)
+library(patchwork)
+```
+
+
+```{r}
+train = read.csv('C:/Users/Margherita/Desktop/MEMDA/train.csv', header=TRUE)
+```
+
+```{r}
+str(train)
+
+train$time_signature <- as.factor(train$time_signature)
+train$key <- as.factor(train$key)
+train$audio_mode <- as.factor(train$audio_mode)
+
+clases <- sapply(train, class)
+varNum <- names(clases)[which(clases %in% c("numeric", "integer"))]
+varCat <- names(clases)[which(clases %in% c("character", "factor"))]
+
+psych::describe(train[, varNum])
+```
+```{r}
+## Tipus de dades
+inspect_types(train) %>% show_plot()
+```
+
+# Liveness
+
+
+```{r, warning = FALSE, message = FALSE}
+
+p1 <- train %>%
+  filter(!is.na(liveness)) %>%
+  ggplot(aes(liveness))+
+  geom_histogram() +
+  labs(x = "Liveness", y = "frequency") +
+  theme_bw()
+
+p2 <- train %>%
+  filter(!is.na(liveness)) %>%
+  ggplot(aes(liveness))+
+  geom_freqpoly() +
+  labs(x = "Liveness", y = "frequency") +
+  theme_bw()
+
+p3 <- train %>%
+  filter(!is.na(liveness)) %>%
+  ggplot(aes(y = liveness))+
+  geom_boxplot(position = "dodge2") +
+  labs(y = "Liveness") +
+  theme_bw()
+
+p1 + p2 + p3
+```
+
+# Loudness
+
+```{r}
+p1 <- train %>%
+  filter(!is.na(loudness)) %>%
+  ggplot(aes(loudness))+
+  geom_histogram() +
+  labs(x = "Loudness", y = "frequency") +
+  theme_bw()
+
+p2 <- train %>%
+  filter(!is.na(loudness)) %>%
+  ggplot(aes(y = loudness))+
+  geom_boxplot() +
+  labs(y = "Loudness") +
+  theme_bw()
+
+p1 + p2
+```
+
+# Danceability
+
+```{r}
+p1 <- train %>%
+  filter(!is.na(danceability)) %>%
+  ggplot(aes(danceability))+
+  geom_histogram() +
+  labs(x = "Danceability", y = "frequency") +
+  theme_bw()
+
+p2 <- train %>%
+  filter(!is.na(danceability)) %>%
+  ggplot(aes(y = danceability))+
+  geom_boxplot() +
+  labs(y = "Danceability") +
+  theme_bw()
+
+p1 + p2
+```
+
+# Song duration
+
+```{r}
+p1 <- train %>%
+  filter(!is.na(song_duration_ms)) %>%
+  ggplot(aes(song_duration_ms))+
+  geom_histogram() +
+  labs(x = "Song duration", y = "frequency") +
+  theme_bw()
+
+p2 <- train %>%
+  filter(!is.na(song_duration_ms)) %>%
+  ggplot(aes(song_duration_ms))+
+  geom_freqpoly() +
+  labs(x = "Song duration", y = "frequency") +
+  theme_bw()
+
+p3 <- train %>%
+  filter(!is.na(song_duration_ms)) %>%
+  ggplot(aes(y = song_duration_ms))+
+  geom_boxplot() +
+  labs(y = "Song duration") +
+  theme_bw()
+
+p1 + p2 + p3
+
+```
+
+# Time signature
+
+```{r}
+time_sig <- group_by(train, time_signature) %>%
+  summarise(count=n()) %>%
+  arrange(desc(time_signature))
+
+time_sig
+
+ggplot(time_sig) +
+  geom_bar(mapping=aes(x=time_signature, y=count), stat="identity") +
+  labs(x = "time_signature", y="Frequency") +
+  theme_bw()
+```
+
+# Audio valence
+
+```{r}
+p1 <- train %>%
+  filter(!is.na(audio_valence)) %>%
+  ggplot(aes(audio_valence))+
+  geom_freqpoly() +
+  labs(x = "Audio Valence", y = "frequency") +
+  theme_bw()
+
+p2 <- train %>%
+  filter(!is.na(audio_valence)) %>%
+  ggplot(aes(y = audio_valence))+
+  geom_boxplot() +
+  labs(y = "Audio Valence") +
+  theme_bw()
+
+p1 + p2
+
+```
+
+# Energy
+
+```{r}
+p1 <- train %>%
+  filter(!is.na(energy)) %>%
+  ggplot(aes(energy))+
+  geom_histogram() +
+  labs(x = "Energy", y = "frequency") +
+  theme_bw()
+
+p2 <- train %>%
+  filter(!is.na(energy)) %>%
+  ggplot(aes(y = energy))+
+  geom_boxplot() +
+  labs(y = "Energy") +
+  theme_bw()
+
+p1 + p2
+
+```
+# Tempo
+
+```{r}
+p1 <- train %>%
+  filter(!is.na(tempo)) %>%
+  ggplot(aes(tempo))+
+  geom_histogram() +
+  labs(x = "Tempo", y = "frequency") +
+  theme_bw()
+
+p2 <- train %>%
+  filter(!is.na(tempo)) %>%
+  ggplot(aes(y = tempo))+
+  geom_boxplot() +
+  labs(y = "Tempo") +
+  theme_bw()
+
+p1 + p2
+
+```
+
+# Acousticness
+
+```{r}
+p1 <- train %>%
+  filter(!is.na(acousticness)) %>%
+  ggplot(aes(acousticness))+
+  geom_histogram() +
+  labs(x = "Acousticness", y = "frequency") +
+  theme_bw()
+
+p2 <- train %>%
+  filter(!is.na(acousticness)) %>%
+  ggplot(aes(y = acousticness))+
+  geom_boxplot() +
+  labs(y = "Acousticness") +
+  theme_bw()
+
+p1 + p2
+
+```
+
+# Speechiness
+
+```{r}
+p1 <- train %>%
+  filter(!is.na(speechiness)) %>%
+  ggplot(aes(speechiness))+
+  geom_histogram() +
+  labs(x = "Speechiness", y = "frequency") +
+  theme_bw()
+
+p2 <- train %>%
+  filter(!is.na(speechiness)) %>%
+  ggplot(aes(y = speechiness))+
+  geom_boxplot() +
+  labs(y = "Speechiness") +
+  theme_bw()
+
+p1 + p2
+
+```
+
+# Key
+
+
+```{r}
+key_table <- group_by(train, key) %>%
+  summarise(count=n()) %>%
+  arrange(desc(key))
+
+key_table
+
+ggplot(key_table) +
+  geom_bar(mapping=aes(x=key, y=count), stat="identity") +
+  labs(x = "Key", y="Frequency") +
+  theme_bw()
+
+```
+
+# Instrumentalness
+
+```{r}
+p1 <- train %>%
+  filter(!is.na(instrumentalness)) %>%
+  ggplot(aes(instrumentalness))+
+  geom_histogram() +
+  labs(x = "Instrumentalness", y = "frequency") +
+  theme_bw()
+
+p2 <- train %>%
+  filter(!is.na(instrumentalness)) %>%
+  ggplot(aes(y = instrumentalness))+
+  geom_boxplot() +
+  labs(y = "Instrumentalness") +
+  theme_bw()
+
+p1 + p2
+
+```
+
+# Audio mode
+
+
+```{r}
+audio <- group_by(train, audio_mode) %>%
+  summarise(count=n()) %>%
+  arrange(desc(audio_mode))
+
+audio
+
+ggplot(audio) +
+  geom_bar(mapping=aes(x=audio_mode, y=count), stat="identity") +
+  labs(x = "Audio Mode", y="Frequency") +
+  theme_bw()
+```
+
+# Song popularity
+
+```{r}
+p1 <- train %>%
+  filter(!is.na(song_popularity)) %>%
+  ggplot(aes(song_popularity))+
+  geom_density() +
+  labs(x = "Song popularity", y = "density") +
+  theme_bw()
+
+p2 <- train %>%
+  filter(!is.na(song_popularity)) %>%
+  ggplot(aes(y = song_popularity))+
+  geom_boxplot() +
+  labs(y = "Song popularity") +
+  theme_bw()
+
+p1 + p2
+
+```
