@@ -15,6 +15,7 @@ library(patchwork)
 library(naniar)
 ```
 
+Prova 
 
 ```{r}
 train = read.csv('C:/Users/Margherita/Desktop/MEMDA/imputedn.csv', header=TRUE)
