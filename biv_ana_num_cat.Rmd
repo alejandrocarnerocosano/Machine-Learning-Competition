@@ -1,0 +1,161 @@
+---
+title: "Bivariant Analysis"
+author: "Alexander Zielke Esteban"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+source("settings.R")
+train <- read.csv(file.path(path_raw, "train.csv"))
+data_imp <- read.csv(file.path(path_intermediate, "train_imputed.csv"))
+```
+
+```{r Classif in cat and num vars}
+varNum <- c("danceability", "energy", "acousticness", "instrumentalness", "liveness",
+            "audio_valence", "tempo", "loudness", "speechiness", "song_duration_ms")
+varCat <- c("time_signature", "key", "audio_mode")
+
+train <- train %>%
+  mutate(across(all_of(varCat), as.factor))
+
+data_imp <- data_imp %>%
+  mutate(across(all_of(varCat), as.factor))
+```
+
+
+# Before imputation
+```{r}
+data <- train
+```
+
+## Numerical vs categorical
+```{r Histogram-identity}
+plots <- list()
+i <- 1
+for (varC in varCat) {
+  for (varN in varNum) {
+    grafico <- ggplot(data, aes(x = .data[[varN]], fill = .data[[varC]])) + 
+      geom_histogram(colour = "black",
+                     lwd = 0.75,
+                     linetype = 1,
+                     position = "identity",
+                     alpha = 0.5) +
+      labs(title = paste("Histograma de", varN, "por", varC),
+           x = varN, y = "Frecuencia", fill = varC)
+    
+    plots[[i]] <- grafico
+    i <- i + 1
+  }
+}
+```
+
+
+```{r Histogram-fill}
+plots <- list()
+i <- 1
+for (varC in varCat) {
+  for (varN in varNum) {
+    grafico <- ggplot(data, aes(x = .data[[varN]], fill = .data[[varC]])) + 
+      geom_histogram(colour = "black",
+                     lwd = 0.75,
+                     linetype = 1,
+                     position = "fill",
+                     alpha = 0.5) +
+      labs(title = paste("Histograma de", varN, "por", varC),
+           x = varN, y = "Frecuencia", fill = varC)
+    
+    plots[[i]] <- grafico
+    i <- i + 1
+  }
+}
+```
+
+
+```{r popularity}
+plots <- list()
+i <- 1
+for (varC in varCat) {
+  grafico <- ggplot(data, aes(x = song_popularity, fill = .data[[varC]])) + 
+    geom_histogram(colour = "black",
+                   lwd = 0.75,
+                   linetype = 1,
+                   position = "fill",
+                   alpha = 0.5) +
+    labs(title = paste("Histograma de", "song_popularity", "por", varC),
+         x = "song_popularity", y = "Frecuencia", fill = varC)
+  
+  plots[[i]] <- grafico
+  i <- i + 1
+}
+```
+
+
+
+# After imputation
+```{r}
+data <- data_imp
+```
+
+
+## Numerical vs categorical
+```{r Histogram-identity}
+plots <- list()
+i <- 1
+for (varC in varCat) {
+  for (varN in varNum) {
+    grafico <- ggplot(data, aes(x = .data[[varN]], fill = .data[[varC]])) + 
+      geom_histogram(colour = "black",
+                     lwd = 0.75,
+                     linetype = 1,
+                     position = "identity",
+                     alpha = 0.5) +
+      labs(title = paste("Histograma de", varN, "por", varC),
+           x = varN, y = "Frecuencia", fill = varC)
+    
+    plots[[i]] <- grafico
+    i <- i + 1
+  }
+}
+```
+
+
+```{r Histogram-fill}
+plots <- list()
+i <- 1
+for (varC in varCat) {
+  for (varN in varNum) {
+    grafico <- ggplot(data, aes(x = .data[[varN]], fill = .data[[varC]])) + 
+      geom_histogram(colour = "black",
+                     lwd = 0.75,
+                     linetype = 1,
+                     position = "fill",
+                     alpha = 0.5) +
+      labs(title = paste("Histograma de", varN, "por", varC),
+           x = varN, y = "Frecuencia", fill = varC)
+    
+    plots[[i]] <- grafico
+    i <- i + 1
+  }
+}
+```
+
+
+```{r popularity}
+plots <- list()
+i <- 1
+for (varC in varCat) {
+  grafico <- ggplot(data, aes(x = song_popularity, fill = .data[[varC]])) + 
+    geom_histogram(colour = "black",
+                   lwd = 0.75,
+                   linetype = 1,
+                   position = "fill",
+                   alpha = 0.5) +
+    labs(title = paste("Histograma de", "song_popularity", "por", varC),
+         x = "song_popularity", y = "Frecuencia", fill = varC)
+  
+  plots[[i]] <- grafico
+  i <- i + 1
+}
+```
