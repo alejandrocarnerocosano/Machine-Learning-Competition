@@ -4,11 +4,11 @@ author: "Alexander Zielke Esteban"
 date: "`r Sys.Date()`"
 output: html_document
 ---
-
+  
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 source("settings.R")
-train <- read.csv(file.path(path_raw, "train.csv"))
+data_raw <- read.csv(file.path(path_raw, "train.csv"))
 data_imp <- read.csv(file.path(path_intermediate, "train_imputed.csv"))
 ```
 
@@ -17,145 +17,136 @@ varNum <- c("danceability", "energy", "acousticness", "instrumentalness", "liven
             "audio_valence", "tempo", "loudness", "speechiness", "song_duration_ms")
 varCat <- c("time_signature", "key", "audio_mode")
 
-train <- train %>%
+data_raw <- data_raw %>%
   mutate(across(all_of(varCat), as.factor))
 
 data_imp <- data_imp %>%
   mutate(across(all_of(varCat), as.factor))
 ```
 
-
-# Before imputation
-```{r}
-data <- train
-```
-
-## Numerical vs categorical
-```{r Histogram-identity}
-plots <- list()
-i <- 1
-for (varC in varCat) {
-  for (varN in varNum) {
-    grafico <- ggplot(data, aes(x = .data[[varN]], fill = .data[[varC]])) + 
-      geom_histogram(colour = "black",
-                     lwd = 0.75,
-                     linetype = 1,
-                     position = "identity",
-                     alpha = 0.5) +
-      labs(title = paste("Histograma de", varN, "por", varC),
-           x = varN, y = "Frecuencia", fill = varC)
-    
-    plots[[i]] <- grafico
-    i <- i + 1
-  }
-}
-```
-
-
-```{r Histogram-fill}
-plots <- list()
-i <- 1
-for (varC in varCat) {
-  for (varN in varNum) {
-    grafico <- ggplot(data, aes(x = .data[[varN]], fill = .data[[varC]])) + 
-      geom_histogram(colour = "black",
-                     lwd = 0.75,
-                     linetype = 1,
-                     position = "fill",
-                     alpha = 0.5) +
-      labs(title = paste("Histograma de", varN, "por", varC),
-           x = varN, y = "Frecuencia", fill = varC)
-    
-    plots[[i]] <- grafico
-    i <- i + 1
-  }
-}
-```
-
-
-```{r popularity}
-plots <- list()
-i <- 1
-for (varC in varCat) {
-  grafico <- ggplot(data, aes(x = song_popularity, fill = .data[[varC]])) + 
+```{r plot_functions}
+plot_histogram <- function(data, varN, varC, position) {
+  ggplot(data, aes(x = .data[[varN]], fill = .data[[varC]])) + 
     geom_histogram(colour = "black",
                    lwd = 0.75,
                    linetype = 1,
-                   position = "fill",
+                   position = position,
                    alpha = 0.5) +
-    labs(title = paste("Histograma de", "song_popularity", "por", varC),
-         x = "song_popularity", y = "Frecuencia", fill = varC)
-  
-  plots[[i]] <- grafico
-  i <- i + 1
+    labs(title = paste("Histograma de", varN, "por", varC),
+         x = varN, y = "Frecuencia", fill = varC)
 }
+
+plots_list <- function(data, varNum, varCat, position) {
+  plots <- list()
+  i <- 1
+  for (varC in varCat) {
+    for (varN in varNum) {
+      grafico <- plot_histogram(data, varN, varC, position = position)
+      plots[[i]] <- grafico
+      i <- i + 1
+    }
+  }
+  return(plots)
+}
+
+plot_interesting_comb <- function(data_raw, data_imp, varN, varC) {
+  p1 <- plot_histogram(data_raw, varN, varC, position = "identity") +
+    labs(title = "raw and identity")
+  p2 <- plot_histogram(data_raw, varN, varC, position = "fill") +
+    labs(title = "raw and fill")
+  p3 <- plot_histogram(data_imp, varN, varC, position = "identity") +
+    labs(title = "imputed and identity")
+  p4 <- plot_histogram(data_imp, varN, varC, position = "fill") +
+    labs(title = "imputed and fill")
+  return(list(p1, p2, p3, p4))
+}
+```
+
+# Before imputation
+## Numerical vs categorical
+### Histograms (identity)
+```{r Histogram-identity}
+plots_ident <- plots_list(data_raw, varNum, varCat, position = "identity")
+# plots_ident
+```
+
+
+### 100% stacked Histograms
+```{r Histogram-fill}
+plots_fill <- plots_list(data_raw, varNum, varCat, position = "fill")
+# plots_fill
+```
+
+
+### 100% stacked Histograms with repsone variable (song popularity)
+```{r popularity}
+plots_popularity <- plots_list(data_raw, varNum = "song_popularity",
+                               varCat, position = "fill")
+#plots_popularity
 ```
 
 
 
 # After imputation
-```{r}
-data <- data_imp
-```
-
-
 ## Numerical vs categorical
-```{r Histogram-identity}
-plots <- list()
-i <- 1
-for (varC in varCat) {
-  for (varN in varNum) {
-    grafico <- ggplot(data, aes(x = .data[[varN]], fill = .data[[varC]])) + 
-      geom_histogram(colour = "black",
-                     lwd = 0.75,
-                     linetype = 1,
-                     position = "identity",
-                     alpha = 0.5) +
-      labs(title = paste("Histograma de", varN, "por", varC),
-           x = varN, y = "Frecuencia", fill = varC)
-    
-    plots[[i]] <- grafico
-    i <- i + 1
-  }
-}
+### Histograms (identity)
+```{r Histogram-identity-imp}
+plots_ident_imp <- plots_list(data_imp, varNum, varCat, position = "identity")
+# plots_ident_imp
 ```
 
 
-```{r Histogram-fill}
-plots <- list()
-i <- 1
-for (varC in varCat) {
-  for (varN in varNum) {
-    grafico <- ggplot(data, aes(x = .data[[varN]], fill = .data[[varC]])) + 
-      geom_histogram(colour = "black",
-                     lwd = 0.75,
-                     linetype = 1,
-                     position = "fill",
-                     alpha = 0.5) +
-      labs(title = paste("Histograma de", varN, "por", varC),
-           x = varN, y = "Frecuencia", fill = varC)
-    
-    plots[[i]] <- grafico
-    i <- i + 1
-  }
-}
+### 100% stacked Histograms
+```{r Histogram-fill-imp}
+plots_fill_imp <- plots_list(data_imp, varNum, varCat, position = "fill")
+# plots_fill_imp
 ```
 
 
-```{r popularity}
-plots <- list()
-i <- 1
-for (varC in varCat) {
-  grafico <- ggplot(data, aes(x = song_popularity, fill = .data[[varC]])) + 
-    geom_histogram(colour = "black",
-                   lwd = 0.75,
-                   linetype = 1,
-                   position = "fill",
-                   alpha = 0.5) +
-    labs(title = paste("Histograma de", "song_popularity", "por", varC),
-         x = "song_popularity", y = "Frecuencia", fill = varC)
+### 100% stacked Histograms with repsone variable (song popularity)
+```{r popularity-imp}
+plots_popularity_imp <- plots_list(data_imp, varNum = "song_popularity",
+                                   varCat, position = "fill")
+#plots_popularity_imp
+```
+
+
+# Relaciones interesantes entre las covariables (features)
+```{r interesting_relations-cov, warning=FALSE, message=FALSE}
+inter_comb <- matrix(c("acousticness", "audio_mode",
+                                     "energy", "audio_mode",
+                                     "danceability", "audio_mode",
+                                     "loudness", "time_signature",
+                                     "audio_valence", "time_signature",
+                                     "acousticness", "time_signature",
+                                     "energy", "time_signature",
+                                     "danceability", "time_signature"),
+                                   ncol = 2, byrow = TRUE) |>
+  as.data.frame()
+colnames(inter_comb) <- c("varN", "varC")
+
+for (i in seq_len(nrow(inter_comb))) {
+  plots <- plot_interesting_comb(data_raw, data_imp,
+                                 inter_comb[i, 1], inter_comb[i, 2])
+  p <- (plots[[1]] | plots[[2]]) /
+    (plots[[3]] | plots[[4]]) + 
+    plot_annotation(title = paste0(inter_comb[i, 1], " vs ", inter_comb[i, 2]))
   
-  plots[[i]] <- grafico
-  i <- i + 1
+  print(p)
+}
+```
+
+# Relaciones interesantes entre covariables categóricas y target
+```{r interesting_relations-targ, warning=FALSE, message=FALSE}
+inter_comb_targ <- data.frame("varN" = "song_popularity", varC = varCat)
+
+for (i in seq_len(nrow(inter_comb_targ))) {
+  plots <- plot_interesting_comb(data_raw, data_imp,
+                                 inter_comb_targ[i, 1], inter_comb_targ[i, 2])
+  p <- (plots[[1]] | plots[[2]]) /
+    (plots[[3]] | plots[[4]]) + 
+    plot_annotation(title = paste0(inter_comb_targ[i, 1], " vs ", inter_comb_targ[i, 2]))
+  
+  print(p)
 }
 ```
