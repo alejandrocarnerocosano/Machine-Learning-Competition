@@ -6,18 +6,15 @@ date: "2025-11-02"
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+source("settings.R")
+df <- read.csv(file.path(path_intermediate, "train_imputed.csv"))
 ```
 
-# Lectura de Datos y Conversión Inicial
+# 1. Lectura de Datos y Conversión Inicial
 
 Key (0-11) y time_signature (0, 1, 3, 4, 5) son numéricas en el fichero, pero no tienen propiedades matemáticas. Las convertimos a factor, le decimos a R que son etiquetas nominales. audio_mode (0/1) también se beneficia de ser un factor para que el modelo lo trate como dos grupos distintos.
 
 ```{r}
-library(dplyr)
-
-
-df<-read.csv(file.path("Data/intermediate", "train_imputed.csv"))
-
 # Lista de variables categóricas
 vars_categoricas <- c("key", "time_signature", "audio_mode")
 
@@ -139,4 +136,12 @@ df_knn <- df %>%
 # sin redundancia de datos.
 str(df_knn)
 ```
+
+# 7. Guardar los resultados del feature engineering (df_knn) como csv
+```{r}
+write.csv(df_knn, file = file.path(path_intermediate, "train_feat_eng.csv"))
+```
+
+
+
 
