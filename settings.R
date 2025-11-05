@@ -11,7 +11,9 @@ packages <- c(
   "inspectdf",
   "patchwork",
   "Metrics",
-  "VIM"
+  "VIM",
+  "FactoMineR",
+  "caret"
 )
 
 for (pkg in packages) {

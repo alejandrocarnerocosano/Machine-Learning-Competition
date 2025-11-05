@@ -65,22 +65,19 @@ knn_regr_tuning_k <- function(data, folds = 10, target = "song_popularity", sear
 }
 
 
-
+##### knn: Model Tuning and Test #####
 set.seed(123)
-data_feat_eng <- read.csv(file.path(path_intermediate, "train_feat_eng.csv"))
+data_knn_vim <- read.csv(file.path(path_intermediate, "train_knn_vim.csv"))
 
-cv_results <- knn_regr_tuning_k(data_feat_eng, search_space = c(1, 10, 50, 100),
+# Try out different k
+cv_results <- knn_regr_tuning_k(data_knn_vim, search_space = c(1, 10, 50, 100),
                                 folds = 5, target = "song_popularity")
 
 
-saveRDS(cv_results, file = "Results/knn_gower_tuning")
-# 
-# # Search best k between 1 and 100 (step = 10)
-# cv_results <- knn_regr_tuning_k(df_knn, search_space = c(1, 10, 50, 100), folds = 10,
-#                                 target = "song_popularity")
-#
 # plot(cv_results$k, cv_results$MAPE, type = "b",
 #      main = "CV-MAPE for different k",
 #      xlab = "k", ylab = "MAPE")
+
+saveRDS(cv_results, file = "Results/knn_vim_tuning.rds")
 
 
