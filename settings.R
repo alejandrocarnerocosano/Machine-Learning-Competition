@@ -9,7 +9,9 @@ packages <- c(
   "dplyr",
   "psych",
   "inspectdf",
-  "patchwork"
+  "patchwork",
+  "Metrics",
+  "VIM"
 )
 
 for (pkg in packages) {
