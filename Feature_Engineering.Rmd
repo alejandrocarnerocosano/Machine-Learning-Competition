@@ -108,11 +108,12 @@ df <- df %>%
                 .names = "{.col}_scaled")) # CREA NUEVAS COLUMNAS
 ```
 
-A continuación, cuando debamos crear el modelo, tenemos que buscar interacciones y escoger las variables que nos acerquen al mejor modelo.
+
+# 7 Columnas relevantes para los modelos
+## 7.1 Columnas para el Modelo knn con la VIM function kNN()
 
 ```{r}
-#Seleccionamos SOLO las columnas finales para el modelo KNN
-df_knn <- df %>%
+df_knn_vim <- df %>%
   select(
     # 1. La variable objetivo
     song_popularity, 
@@ -132,14 +133,38 @@ df_knn <- df %>%
     starts_with("valence_binned_")
   )
 
-# Ahora, 'df_knn' está perfectamente limpio y listo para entrenar KNN
+# Ahora, 'df_knn_vim' está perfectamente limpio y listo para entrenar KNN
 # sin redundancia de datos.
-str(df_knn)
+str(df_knn_vim)
 ```
 
-# 7. Guardar los resultados del feature engineering (df_knn) como csv
+## 7.2 Columnas para el Modelo knn usando FactoMineR::FAMD() y caret::train(method = "knn")
 ```{r}
-write.csv(df_knn, file = file.path(path_intermediate, "train_feat_eng.csv"))
+df_knn_caret <- df %>%
+  select(
+    -ID,
+    -ends_with("_scaled"),
+    -ends_with("_log"),
+    # 3. La nueva feature binaria
+    -instrumentalness,
+    # 5. Todas las dummies (OHE) creadas
+    -starts_with("key_"),
+    -starts_with("time_signature_"),
+    -starts_with("valence_binned_")
+  ) %>%
+  select(song_popularity, everything())
+
+str(df_knn_caret)
+```
+
+
+
+# 7. Guardar los resultados del feature engineering (df_knn_) como csv
+```{r}
+write.csv(df_knn_vim, file = file.path(path_intermediate, "train_knn_vim.csv"),
+          row.names = FALSE)
+write.csv(df_knn_caret, file = file.path(path_intermediate, "train_knn_caret.csv"),
+          row.names = FALSE)
 ```
 
 
