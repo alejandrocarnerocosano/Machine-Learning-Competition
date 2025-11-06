@@ -17,14 +17,16 @@ set.seed(123)
 
 control <- trainControl(method = "repeatedcv", number = 10, repeats = 3)
 tuneGrid <- expand.grid(
-  k = c(3, 7, 11, 21, 41, 81, 111)
+  kmax = c(3, 7, 11, 21, 41, 81, 111),
+  distance = 2,
+  kernel = c("rectangular", "triangular", "gaussian")
 )
 
 
 knnModel <- train(
   song_popularity ~ .,
   data = coords,
-  method = "knn",
+  method = "kknn",
   metric = "RMSE",
   trControl = control,
   tuneGrid = tuneGrid
@@ -34,7 +36,7 @@ knnModel <- train(
 knnModel$bestTune
 knnModel$results
 
-plot(knnModel)
+plot(knnModel, xlab = "k", main = "Repeated 10-fold CV Tuning")
 
 saveRDS(knnModel$results, file = "Results/knn_caret_tuning.rds")
 
