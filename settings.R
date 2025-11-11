@@ -4,16 +4,24 @@
 
 # Load packages
 packages <- c(
-  "ggplot2",
-  "tidyr",
+  "arules",
+  "arulesViz",
+  "caret",
   "dplyr",
-  "psych",
-  "inspectdf",
-  "patchwork",
-  "Metrics",
-  "VIM",
   "FactoMineR",
-  "caret"
+  "fastDummies",
+  "ggcorrplot",
+  "ggplot2",
+  "inspectdf",
+  "Metrics",
+  "naniar",
+  "patchwork",
+  "PerformanceAnalytics",
+  "psych",
+  "Rlof",
+  "solitude",
+  "tidyr",
+  "VIM"
 )
 
 for (pkg in packages) {

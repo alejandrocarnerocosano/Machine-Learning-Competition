@@ -1,7 +1,3 @@
-library(arules)
-library(arulesViz)
-library(FactoMineR)
-library(tidyverse)
 source("settings.R")
 
 #################################################

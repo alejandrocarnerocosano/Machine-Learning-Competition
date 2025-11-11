@@ -1,29 +1,17 @@
-#----------------------------------------------------------------#
-# 1. INSTALACIÓN Y CARGA DE LIBRERÍAS
-#----------------------------------------------------------------#
-
-# Instalar librerías si no están presentes
-if (!require("solitude")) install.packages("solitude")
-if (!require("Rlof")) install.packages("Rlof")
-if (!require("tidyverse")) install.packages("tidyverse")
-
-# Cargar librerías
-library(solitude)    # Para Isolation Forest
-library(Rlof)        # Para Local Outlier Factor (LOF)
-library(tidyverse)   # Para manipulación de datos
+source("settings.R")
 
 #----------------------------------------------------------------#
-# 2. CREACIÓN DE DATAFRAME DE EJEMPLO 'train'
+# 1. CREACIÓN DE DATAFRAME DE EJEMPLO 'train'
 #----------------------------------------------------------------#
 
-train <- read.csv("~/Downloads/imputedn.csv")
+train <- read.csv(file.path(path_intermediate, "train_imputed.csv"))
 
 
 cat("Dimensiones del dataframe 'train':", dim(train), "\n")
 print(tail(train)) # Ver los outliers añadidos al final
 
 #----------------------------------------------------------------#
-# 3. APLICACIÓN DE MÉTODOS DE DETECCIÓN
+# 2. APLICACIÓN DE MÉTODOS DE DETECCIÓN
 #----------------------------------------------------------------#
 
 # --- MÉTODO 1: ISOLATION FOREST (RECOMENDADO) ---
@@ -83,7 +71,7 @@ cat("Índices de Outliers detectados:", outliers_cook_indices, "\n")
 print(train[outliers_cook_indices, ])
 
 #----------------------------------------------------------------#
-# 4. CREACIÓN DEL DATAFRAME FINAL CON OUTLIERS DETECTADOS
+# 3. CREACIÓN DEL DATAFRAME FINAL CON OUTLIERS DETECTADOS
 #----------------------------------------------------------------#
 
 # Usaremos los resultados del Isolation Forest, el método recomendado.

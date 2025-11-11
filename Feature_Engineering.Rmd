@@ -31,9 +31,6 @@ str(df)
 Aplicamos OHE para variables nominales con más de dos niveles, ya que permite a los modelos matemáticos (Regresión, KNN) usarlas sin asumir una relación ordinal falsa.
 
 ```{r}
-#install.packages("fastDummies")
-library(fastDummies)
-
 # Creamos las variables dummy. 
 # audio_mode no es necesaria aquí, R la manejará como 0/1.
 # Conservamos las originales con remove_selected_columns = FALSE
@@ -58,7 +55,6 @@ df <- df %>%
 El logaritmo "comprime" la cola derecha de la distribución, acercando los outliers al resto de los datos. Usamos log1p (que calcula log(x + 1)) para manejar correctamente los valores 0.
 
 ```{r}
-library(dplyr)
 # Lista de variables con asimetría positiva
 vars_pos_skew <- c("song_duration_ms", "acousticness", "liveness", 
                      "speechiness", "instrumentalness")

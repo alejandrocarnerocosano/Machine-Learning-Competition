@@ -7,16 +7,12 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(dplyr)
-library(psych)
-library(ggplot2)
-library(inspectdf)
-library(patchwork)
+source("settings.R")
 ```
 
 
 ```{r}
-train = read.csv('C:/Users/Margherita/Desktop/MEMDA/train.csv', header=TRUE)
+train = read.csv(file.path(path_raw, "train.csv"), header = TRUE)
 ```
 
 ```{r}

@@ -1,7 +1,9 @@
+source("settings.R")
+
 #2. Bivariant analysis before imputation
 
 #Numerical vs. numerical
-datos<-read.csv("train.csv")
+datos <- read.csv(file.path(path_raw, "train.csv"))
 
 sapply(datos, class)
 
@@ -20,10 +22,9 @@ varNum <- names(clases)[which(clases %in% c("numeric", "integer"))]
 varCat <- names(clases)[which(clases %in% c("character", "factor"))]
 
 cor(datos[, varNum])
-library(PerformanceAnalytics)
 chart.Correlation(as.matrix(datos[, varNum]),histogram = TRUE,pch=12)
 
-library(ggcorrplot)
+
 corr <- round(cor(datos[, varNum]), 1)
 ggcorrplot(corr, lab = T)
 
@@ -31,7 +32,7 @@ ggcorrplot(corr, lab = T)
 
 
 #2. Bivariant analysis after imputation
-datos<-read.csv("imputedn.csv")
+datos<-read.csv(file.path(path_intermediate, "train_imputed.csv"))
 
 sapply(datos, class)
 
@@ -50,10 +51,10 @@ varNum <- names(clases)[which(clases %in% c("numeric", "integer"))]
 varCat <- names(clases)[which(clases %in% c("character", "factor"))]
 
 cor(datos[, varNum])
-library(PerformanceAnalytics)
+
 chart.Correlation(as.matrix(datos[, varNum]),histogram = TRUE,pch=12)
 
-library(ggcorrplot)
+
 corr <- round(cor(datos[, varNum]), 1)
 ggcorrplot(corr, lab = T)
 
@@ -64,3 +65,4 @@ ggcorrplot(corr, lab = T)
 #Esto tiene mucho sentido, ya que las canciones con más energía suelen tener un volumen más alto.
 #acousticness y energy tienen una fuerte correlación negativa (-0.7). 
 #También es lógico: las canciones acústicas suelen ser menos enérgicas. Lo mismo ocurre entre acousticness y loudness (-0.6).
+
