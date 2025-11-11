@@ -1,9 +1,11 @@
 source("settings.R")
 
-### knn - Prediction function
+
+# Functions -------------------------------------------------------------------------------------------------------
+### Prediction Function
 # train: full imputed data set
 # test: set with no missing values in feature values and only NA in target column
-knn_regr_pred <- function(train, test, k, target = "song_popularity") {
+knn_vim_pred <- function(train, test, k, target = "song_popularity") {
   test[, target] <- NA
   data <- rbind(train, test)
   test_row_ids <- seq(nrow(train) + 1, nrow(train) + nrow(test))
@@ -11,73 +13,125 @@ knn_regr_pred <- function(train, test, k, target = "song_popularity") {
   return(result[test_row_ids, ])
 }
 
-### MAPE calculation function (with shift + 1)
-mape <- function(actual, predicted, epsilon = 1e-8) {
-  100 * mean(abs((actual - predicted) / (actual + epsilon)))
-}
 
-### knn-tuning function
+### Test Function
 ## input
 # data: full imputed data set
-# folds: folds of CV
+# cv_test_folds: number of folds of outer CV
+# cv_tuning_folds: number of folds of inner CV
 # target: column name in the data set corresponding to the target variable
-# search_space: values of k to try
-knn_regr_tuning_k <- function(data, folds = 10, target = "song_popularity", search_space = NULL) {
-  n <- nrow(data)
+# tuning_search_space_k: values of k to try/ tune for
+knn_vim_test <- function(data, cv_test_folds, cv_tuning_folds,
+                         target = "song_popularity", tuning_search_space_k = c(3, 9, 27, 81, 100, 111)) {
+  target_vals <- data[, target]
   
-  if (is.null(search_space)) {
-    k_values <- seq(sqrt(n) - 10, sqrt(n) + 10)
-  } else {
-    k_values <- search_space
-  }
+  outer_folds <- createFolds(target_vals, k = cv_test_folds,
+                             list = TRUE, returnTrain = TRUE)
   
-  fold_ids <- sample(rep(1:folds, length.out = n))
+  # Two empty data sets to store the results
+  test_results <- data.frame(OuterFold = numeric(0),
+                             k = numeric(0),
+                             RMSE = numeric(0))
   
-  results <- data.frame(k = k_values,
-                        MAPE = NA,
-                        RMSE = NA)
+  overall_tuning_res <- data.frame(OuterFold = numeric(0),
+                                   k = numeric(0),
+                                   RMSE = numeric(0),
+                                   MAE = numeric(0))
   
-  for (i in seq_along(k_values)) {
-    k <- k_values[i]
-    fold_mape <- numeric(folds)
-    fold_rmse <- numeric(folds)
+  # Outer Loop for Testing
+  for (i in seq_along(outer_folds)) {
     
-    for (f in seq_len(folds)) {
-      train <- data[fold_ids != f, ]
-      test <- data[fold_ids == f, ]
+    cat("Outer Fold:", i, "\n")
+    
+    # Train/ Test Split
+    train_indices <- outer_folds[[i]]
+    train_data <- data[train_indices, ]
+    test_data <- data[-train_indices, ]
+    
+    inner_folds <- createFolds(train_data[, target], k = cv_tuning_folds,
+                               list = TRUE, returnTrain = TRUE)
+    
+    tuning_res <- data.frame(OuterFold = i,
+                             k = tuning_search_space_k,
+                             RMSE = NA,
+                             MAE = NA)
+    
+    # Inner Loop: cv_tuning_folds-CV for tuning
+    for (l in seq_along(tuning_search_space_k)) {
+      k <- tuning_search_space_k[[l]]
+      rmse_k <- numeric(length(inner_folds))
+      mae_k <- numeric(length(inner_folds))
       
-      preds <- knn_regr_pred(train, test, k = k, target = target)[, target]
+      for (j in seq_along(inner_folds)) {
+        # Tuning Train/ Validation Split
+        train_tune_indices <- inner_folds[[j]]
+        train_tune_data <- train_data[train_tune_indices, ]
+        validation_data <- train_data[-train_tune_indices, ]
+        
+        preds <- knn_vim_pred(train_tune_data, validation_data,
+                              k = k, target = target)[, target]
+        
+        rmse_k[j] <- rmse(validation_data[[target]], preds)
+        mae_k[j] <- mae(validation_data[[target]], preds)
+      }
       
-      fold_mape[f] <- mape(test[[target]], preds)
-      fold_rmse[f] <- rmse(test[[target]], preds)
+      tuning_res[l, "RMSE"] <- mean(rmse_k)
+      tuning_res[l, "MAE"] <- mean(mae_k)
     }
     
-    results$MAPE[i] <- mean(fold_mape)
-    results$RMSE[i] <- mean(fold_rmse)
-    message(sprintf("k = %d | CV-MAPE = %.3f | CV-RMSE = %.3f",
-                    k, results$MAPE[i], results$RMSE[i]))
+    best_k <- tuning_res$k[which.min(tuning_res$RMSE)]
+    
+    cat("Tuning suggested k = ", best_k, "\n")
+    
+    # Save tuning results
+    overall_tuning_res <- rbind(overall_tuning_res, tuning_res)
+    
+    # Learn the model on the outer train set with the best k
+    # and test it using the outer test set
+    preds_test <- knn_vim_pred(train_data, test_data,
+                               k = best_k, target = target)[, target]
+    
+    # Performance estimation
+    rmse_val <- rmse(test_data[, target], preds_test)
+    
+    # Save test result
+    test_results <- rbind(test_results,
+                          data.frame(OuterFold = i,
+                                     k = best_k,
+                                     RMSE = rmse_val))
+    
+    cat("Test result using k = ", best_k, ": RMSE = ", round(rmse_val, 3), "\n")
   }
   
-  best_row <- results[which.min(results$MAPE), ]
-  cat("Best K = ", best_row$k, "with average MAPE =", round(best_row$MAPE, 3))
+  summary_test_results <- test_results %>%
+    summarise(mean_RMSE = mean(RMSE),
+              sd_RMSE = sd(RMSE))
   
-  return(results)
+  return(list(
+    tuning_results = overall_tuning_res,
+    test_results = test_results,
+    test_summary = summary_test_results
+  ))
 }
 
 
-##### knn: Model Tuning and Test #####
+
+# Perform Test ----------------------------------------------------------------------------------------------------
 set.seed(123)
+
 data_knn_vim <- read.csv(file.path(path_intermediate, "train_knn_vim.csv"))
 
-# Try out different k
-cv_results <- knn_regr_tuning_k(data_knn_vim, search_space = c(1, 10, 50, 100),
-                                folds = 5, target = "song_popularity")
+results <- knn_vim_test(data_knn_vim, cv_test_folds = 3, cv_tuning_folds = 10)
+
+results$tuning_results
+results$test_results
+results$test_summary
 
 
-# plot(cv_results$k, cv_results$MAPE, type = "b",
-#      main = "CV-MAPE for different k",
-#      xlab = "k", ylab = "MAPE")
 
-saveRDS(cv_results, file = "Results/knn_vim_tuning.rds")
+# Save Test Results -----------------------------------------------------------------------------------------------
 
+saveRDS(results$tuning_results, file = "Results/knn_vim_tuning.rds")
+saveRDS(results$test_results, file = "Results/knn_vim_test.rds")
+saveRDS(results$test_summary, file = "Results/knn_vim_test_summary.rds")
 
