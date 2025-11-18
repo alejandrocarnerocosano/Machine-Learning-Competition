@@ -12,9 +12,11 @@ packages <- c(
   "fastDummies",
   "ggcorrplot",
   "ggplot2",
+  "ggpubr",
   "glue",
   "inspectdf",
   "lifecycle",
+  "MASS",
   "Metrics",
   "mice",
   "naniar",
@@ -22,8 +24,10 @@ packages <- c(
   "PerformanceAnalytics",
   "psych",
   "Rlof",
+  "skimr",
   "solitude",
   "tidyr",
+  "tree",
   "VIM"
 )
 
