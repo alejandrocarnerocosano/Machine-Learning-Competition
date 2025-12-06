@@ -10,15 +10,19 @@ packages <- c(
   "dplyr",
   "FactoMineR",
   "fastDummies",
+  "e1071",
   "ggcorrplot",
   "ggplot2",
   "ggpubr",
   "glue",
+  "haven",
   "inspectdf",
   "lifecycle",
+  "kernlab",
   "MASS",
   "Metrics",
   "mice",
+  "mlbench",
   "naniar",
   "patchwork",
   "PerformanceAnalytics",
@@ -30,6 +34,7 @@ packages <- c(
   "tree",
   "VIM"
 )
+
 
 for (pkg in packages) {
   if (!require(pkg, character.only = TRUE, quietly = TRUE)) {
