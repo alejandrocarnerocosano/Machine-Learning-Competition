@@ -169,12 +169,17 @@ model_svm_poly <- train(
   method = 'svmPoly', # Changed to svmPoly
   preProcess = c("center", "scale"),
   trControl = ctrl,
-  tuneGrid = expand.grid(C = c(0.5, 1, 1.5), degree = c(2, 3), scale = c(0.5, 1, 1.5))
+  tuneGrid = expand.grid(C = c(0.5, 1.5), degree = c(2, 3), scale = c(0.5,1.5))
 )
 
-predictions_dataTest_poly <- predict(model_svm_poly, newdata = dataTest)
+predictions_dataTest_poly <- predict(model_svm_poly, newdata = dataTest_svm1)
 
 # Calculate RMSE for dataTest
 
 rmse_dataTest <- RMSE(predictions_dataTest_poly, dataTest$song_popularity)
 cat(paste("RMSE on dataTest using best caret SVM model:", round(rmse_dataTest, 4), "\n\n"))
+#RMSE: 23.1954
+
+mape_dataTest <- mape(predictions_dataTest_poly, dataTest$song_popularity)
+cat(paste("mape on dataTest using best caret SVM model:", round(mape_dataTest, 4), "\n\n"))
+#MAPE: 0.3384
