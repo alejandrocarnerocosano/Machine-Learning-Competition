@@ -1,14 +1,23 @@
 source("settings.R")
+source("FE_v2[1]")
+library(tictoc)
 
-# Training dataset with all the variables
+# Training dataset with all the original variables
 imputed_train <- read.csv(file.path(path_intermediate, "train_imputed.csv"))
 imputed_test <- read.csv(file.path(path_intermediate, "test_imputed.csv"))
 
 # Dataset with preprocessing (simpler model)
 # svm1 discard the variables that are not considered important predictors
-# svm2 keeps only the 4 most important predictorsaccording to EDA
+# svm2 keeps only the 4 most important predictors according to EDA
 df_svm1 <- read.csv(file.path(path_intermediate, "train_svm1.csv"))
 df_svm2 <- read.csv(file.path(path_intermediate, "train_svm2.csv"))
+
+# Feature engeneering used for XGBoost
+df_fe <- preparar_dataset_final(imputed_train)$data
+set.seed(1234)
+test<-sample(1:nrow(df_fe),size = nrow(df_fe)/3)
+dataTrain_fe<-df_fe[-test,]
+dataTest_fe<-df_fe[test,]
   
 #----------------------------------------------------------------------------
 #FULL MODEL
@@ -73,7 +82,6 @@ sample_submission_svm <- data.frame(id = 1:length(predictions_final_test), song_
 #Model svm1
 
 # keep all the variables except liveness, speechiness, tempo
-
 #------------------------------------------------------------------------------
 
 dataTrain_svm1<-df_svm1[-test,]
@@ -103,7 +111,6 @@ cat(paste("RMSE on dataTest using best caret SVM model:", round(rmse_dataTest, 4
 #Model svm2
 
 # keep only danceability, energy, acousticness, instrumentalness.
-
 #------------------------------------------------------------------------------
 
 dataTrain_svm2<-df_svm2[-test,]
@@ -183,3 +190,108 @@ cat(paste("RMSE on dataTest using best caret SVM model:", round(rmse_dataTest, 4
 mape_dataTest <- mape(predictions_dataTest_poly, dataTest$song_popularity)
 cat(paste("mape on dataTest using best caret SVM model:", round(mape_dataTest, 4), "\n\n"))
 #MAPE: 0.3384
+
+#------------------------------------------------------------------------
+# Try new feature engeneering
+#------------------------------------------------------------------------
+
+tic()
+model_svm_fe <- train(
+  song_popularity ~ .,
+  data = dataTrain_fe,
+  method = 'svmRadial',
+  preProcess = c("center", "scale"),
+  trControl = ctrl,     # Use the CV control defined above
+  tuneGrid = expand.grid(C = c(0.4, 0.1), sigma = c(0.009, 0.001)) # Use the grid search space
+)
+toc()
+#selection: sigma=0.01, C=0.5
+
+predictions_dataTest <- predict(model_svm_fe, newdata = dataTest_fe)
+
+# Calculate RMSE for dataTest
+
+rmse_dataTest <- RMSE(predictions_dataTest, dataTest_fe$song_popularity)
+cat(paste("RMSE on dataTest using best caret SVM model:", round(rmse_dataTest, 4), "\n\n"))
+#RMSE: 21.9962
+
+mape_dataTest <- mape(predictions_dataTest, dataTest_fe$song_popularity)
+cat(paste("mape on dataTest using best caret SVM model:", round(mape_dataTest, 4), "\n\n"))
+#MAPE: 0.3079
+
+#------------------------------------------------------------------------
+# Put weights for outliers
+#------------------------------------------------------------------------
+
+train_with_outliers <- train_with_outliers %>%
+  dplyr::mutate(
+    weights = ifelse(is_outlier == TRUE, 
+                     0.5, # Se è un outlier (TRUE), il peso è 0.5
+                     1.0  # Altrimenti (FALSE), il peso è 1.0
+    )
+  )
+
+weights_train <- train_with_outliers[-test,]
+weights_train <- weights_train$weights
+
+model_svm_pesato <- train(
+  song_popularity ~ .,
+  data = dataTrain_fe,
+  method = 'svmRadial',
+  weights = weights_train,
+  preProcess = c("center", "scale"),
+  trControl = ctrl,     # Use the CV control defined above
+  tuneGrid = expand.grid(C = 0.009, sigma = 0.4) # Use the grid search space
+)
+predictions_dataTest <- predict(model_svm_pesato, newdata = dataTest)
+rmse_dataTest <- RMSE(predictions_dataTest, dataTest$song_popularity)
+cat(paste("RMSE on dataTest using best caret SVM model:", round(rmse_dataTest, 4), "\n\n"))
+
+
+#------------------------------------------------------------------------
+# Feature selection
+#------------------------------------------------------------------------
+
+# add feature selection with all the variables 
+
+controllo_rfe <- rfeControl(
+  functions = caret::caretFuncs, 
+  method = "cv", 
+  number = 5 # Cross-validation a 5 fold
+)
+
+sizes <- c(1:5, 10, 15, 20, ncol(dataTrain) - 1)
+
+# Esecuzione dell'RFE
+risultato_rfe <- rfe(
+  x = dataTrain[, -2], # Predittori
+  y = dataTrain$song_popularity,  # Variabile Target
+  sizes = sizes, # Prova sottoinsiemi da 1 a 10 variabili
+  rfeControl = controllo_rfe,
+  method = "svmRadial", # Modello SVR per la selezione
+  tuneGrid = expand.grid(C = 1, sigma = 0.01),
+  preProcess = c("center", "scale")
+)
+
+# Visualizza le variabili selezionate
+variabili_selezionate <- predictors(risultato_rfe)
+names(imputed_train)
+df_feature_selection <- imputed_train[, c(3, 13, 15)]
+
+set.seed(1234)
+test<-sample(1:nrow(df_fe),size = nrow(df_fe)/3)
+dataTrain_fe<-df_feature_selection[-test,]
+dataTest_fe<-df_feature_selection[test,]
+
+model_svm_feat_sel <- train(
+  song_popularity ~ .,
+  data = dataTrain,
+  method = 'svmRadial',
+  preProcess = c("center", "scale"),
+  trControl = ctrl,     # Use the CV control defined above
+  tuneGrid = expand.grid(C = 0.009, sigma = 0.4) # Use the grid search space
+)
+
+predictions_dataTest <- predict(model_svm_feat_sel, newdata = dataTest)
+rmse_dataTest <- RMSE(predictions_dataTest, dataTest$song_popularity)
+cat(paste("RMSE on dataTest using best caret SVM model:", round(rmse_dataTest, 4), "\n\n"))
