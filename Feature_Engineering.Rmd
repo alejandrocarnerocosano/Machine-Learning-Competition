@@ -153,38 +153,6 @@ df_knn_caret <- df %>%
 str(df_knn_caret)
 ```
 
-## 7.2 Columnas para el Modelo RF
-
-Ratio: keep variables log scaled (better for the split with a sckewed vb) and the dummies (binary split better?). 
-
-```{r}
-df_rn <- df %>%
-  dplyr::select(
-    song_popularity, 
-    
-    ends_with("_log_scaled"),
-    
-    es_instrumental,
-    
-    audio_mode,
-    loudness,
-    danceability, 
-    audio_valence,
-    energy,
-    tempo, 
-  
-    starts_with("key_"),
-    starts_with("time_signature_"),
-    starts_with("valence_binned_")
-  )
-
-# remove instrumentalness_log_scaled
-
-# Ahora, 'df_knn_vim' está perfectamente limpio y listo para entrenar KNN
-# sin redundancia de datos.
-str(df_rn)
-```
-
 ## Columnas para el modelo SVM
 
 The algorithm SVM within the package "caret" already implement the centering and scaling of the variables. This algorithm is very heavy to train, for this reason we try to keep only the most important predictors, according to the exploratory analysis. 
@@ -233,9 +201,6 @@ df_svm2 <- df %>%
 write.csv(df_knn_vim, file = file.path(path_intermediate, "train_knn_vim.csv"),
           row.names = FALSE)
 write.csv(df_knn_caret, file = file.path(path_intermediate, "train_knn_caret.csv"),
-          row.names = FALSE)
-
-write.csv(df_rn, file = file.path(path_intermediate, "train_rn.csv"),
           row.names = FALSE)
 
 write.csv(df_svm1, file = file.path(path_intermediate, "train_svm1.csv"),
