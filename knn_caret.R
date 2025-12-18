@@ -141,7 +141,7 @@ results$test_summary
 
 # Save Test Results -----------------------------------------------------------------------------------------------
 
-saveRDS(results$tuning_results, file = "Results/knn_caret_tuning.rds")
-saveRDS(results$test_results, file = "Results/knn_caret_test.rds")
-saveRDS(results$test_summary, file = "Results/knn_caret_test_summary.rds")
+saveRDS(results$tuning_results, file = "Results/KNN/knn_caret_tuning.rds")
+saveRDS(results$test_results, file = "Results/KNN/knn_caret_test.rds")
+saveRDS(results$test_summary, file = "Results/KNN/knn_caret_test_summary.rds")
 
