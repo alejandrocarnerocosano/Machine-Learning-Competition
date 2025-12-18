@@ -16,6 +16,10 @@ library(fastDummies)
 library(ParBayesianOptimization)
 library(SHAPforxgboost)
 library(ggplot2)
+library(readr)
+
+train_imputed <- read_csv("Data/intermediate/train_imputed.csv")
+test_imputed <- read_csv("Data/intermediate/test_imputed.csv")
 
 set.seed(123) # Reproducibilidad
 
@@ -172,6 +176,8 @@ bounds <- list(
 )
 
 opt_res <- bayesOpt(FUN = obj_func_rmse, bounds = bounds, initPoints = 8, iters.n = 15, acq = "ucb")
+saveRDS(opt_res, file = "Results/XGBoost/bayes_opt_res.rds")
+
 best_params_raw <- getBestPars(opt_res)
 
 # Construir lista de parámetros ganadores
@@ -194,6 +200,8 @@ cv_final <- xgb.cv(
   early_stopping_rounds = 50, verbose = 0, print_every_n = 100
 )
 
+saveRDS(cv_final, file = "Results/XGBoost/cv_final.rds")
+
 best_iter <- cv_final$best_iteration
 final_rmse <- cv_final$evaluation_log$test_rmse_mean[best_iter]
 cat(paste0("📊 RMSE FINAL (10-Fold): ", round(final_rmse, 4), "\n"))
@@ -203,12 +211,14 @@ cat(paste0("📊 RMSE FINAL (10-Fold): ", round(final_rmse, 4), "\n"))
 # ==============================================================================
 model_production <- xgb.train(params = final_params, data = dtrain_opt, nrounds = best_iter, verbose = 0)
 
+saveRDS(model_production, file = "Results/XGBoost/model_production.rds")
+
 # Predecir
 preds <- predict(model_production, dtest_opt)
 preds <- pmax(0, pmin(100, preds)) # Clipping 0-100
 
 # Guardar Submission
-filename <- paste0("submission_xgb_master_", round(final_rmse, 4), ".csv")
+filename <- paste0("Results/XGBoost/submission_xgb_master_", round(final_rmse, 4), ".csv")
 submission <- data.frame(ID = test_final$ID, song_popularity = preds)
 write.csv(submission, filename, row.names = FALSE)
 cat(paste("Archivo generado:", filename, "\n"))
@@ -236,5 +246,6 @@ p2 <- shap.plot.dependence(data_long = shap_long, x = "tempo_sq", y = "tempo_sq"
   ggtitle("Efecto no lineal del Tempo")
 print(p2)
 
-
+saveRDS(p1, file = "Results/XGBoost/plot_variable_impact_shap.rds")
+saveRDS(p2, file = "Results/XGBoost/plot_effect_tempo.rds")
 
